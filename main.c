@@ -75,6 +75,26 @@ void createNote(char* noteName, const char* notesPath)
   fclose(newNote);
 }
 
+void deleteNote(char* noteName, const char* notesPath)
+{
+  char fullPath[128];
+  strcpy(fullPath, notesPath);
+  strcat(fullPath, noteName);
+  char* md = ".md";
+  strcat(fullPath, md);
+
+  FILE* checkNote = fopen(fullPath, "r");
+  if (checkNote != NULL)
+  {
+    remove(fullPath);
+    printf("Note \"%s\" sucsessfully deleted\n", noteName);
+    return;
+  }
+  printf("Note \"%s\" does not exist!\n", noteName);
+  return;
+
+}
+
 int main(void)
 {
   const char* notesPath = "./notes/";
@@ -101,12 +121,18 @@ int main(void)
       printf("Enter name of new note:\n");
       fgets(noteName, 64, stdin);
       /* while ((c = getchar()) != '\n' && c != EOF) { } */
-      printf(noteName);
+      /* printf(noteName); */
       noteName[strcspn(noteName, "\n")] = '\0'; //replacing '\n' with '\0' in noteName
       if (checkExistingNote(noteName, notesPath))
       {
-      createNote(noteName, notesPath);
+        createNote(noteName, notesPath);
       }
+      break;
+    case 3:
+      printf("Enter name of note that you want to delete:\n");
+      fgets(noteName, 64, stdin);
+      noteName[strcspn(noteName, "\n")] = '\0'; //replacing '\n' with '\0' in noteName
+      deleteNote(noteName, notesPath);      
       break;
   }
   //printf("\033[2J");
