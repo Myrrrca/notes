@@ -24,17 +24,21 @@ void refreshNotes(const char* notesPath)
   uint16_t filesCount;
   DIR* dir;
   struct dirent* entry;
+  char* noteName;
 
   dir = opendir(notesPath);
   while ((entry = readdir(dir)) != NULL)
   {
     if (entry->d_type == DT_REG)
     {
+      noteName = entry->d_name; 
+      noteName[strcspn(noteName, ".")] = '\0'; // removing .md 
+      printf("%s\n", noteName);
       ++filesCount;
     }
   }
   closedir(dir);
-  printf("%d\n", filesCount);
+  /* printf("%d\n", filesCount); */
 }
 
 int checkExistingNote(char* noteName, const char* notesPath)
@@ -44,7 +48,6 @@ int checkExistingNote(char* noteName, const char* notesPath)
   strcat(fullPath, noteName);
   char* md = ".md";
   strcat(fullPath, md);
-
   FILE* checkNote = fopen(fullPath, "r");
   if (checkNote != NULL)
   {
@@ -81,6 +84,7 @@ int main(void)
   mkdirNotes(notesPath);
   refreshNotes(notesPath);
   /* printNotesList(configPath); */
+
   
   char action[2];
   if (fgets(action, 2, stdin) == NULL)
