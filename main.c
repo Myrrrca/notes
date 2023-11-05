@@ -6,20 +6,19 @@
 
 void printGreet()
 {
-  printf("Notes store\n");
+  printf("Notes Store\n");
 }
 
 void printOptions()
 {
-  printf("1 - create note   2 - edit note   3 - delete note\n");
-}
+  printf("c - create note   o - open   e - edit note   d - delete note   q - exit\n"); }
 
 void mkdirNotes(const char* notesPath)
 {
   mkdir(notesPath, 0777);
 }
 
-void refreshNotes(const char* notesPath)
+void showNotes(const char* notesPath)
 {
   uint16_t filesCount;
   DIR* dir;
@@ -33,28 +32,13 @@ void refreshNotes(const char* notesPath)
     {
       noteName = entry->d_name; 
       noteName[strcspn(noteName, ".")] = '\0'; // removing .md 
-      printf("%s\n", noteName);
+      printf("--- %s\n", noteName);
       ++filesCount;
     }
   }
+  if (filesCount == 0)
+    printf("**Notes storage is empty**\n");
   closedir(dir);
-  /* printf("%d\n", filesCount); */
-}
-
-int checkExistingNote(char* noteName, const char* notesPath)
-{
-  char fullPath[128];
-  strcpy(fullPath, notesPath);
-  strcat(fullPath, noteName);
-  char* md = ".md";
-  strcat(fullPath, md);
-  FILE* checkNote = fopen(fullPath, "r");
-  if (checkNote != NULL)
-  {
-    printf("Note \"%s\" already exist!\n", noteName);
-    return 0;
-  }
-  return 1;
 }
 
 void createNote(char* noteName, const char* notesPath)
@@ -64,15 +48,54 @@ void createNote(char* noteName, const char* notesPath)
   strcat(fullPath, noteName);
   char* md = ".md";
   strcat(fullPath, md);
-  /* printf("%s\n", fullPath); */
+
+  FILE* checkNote = fopen(fullPath, "r");
+  if (checkNote != NULL)
+  {
+    printf("Note \"%s\" already exist!\n", noteName);
+    scanf("%*c");
+    printf("\033[2J");
+    fclose(checkNote);
+    return;
+  }
 
   FILE* newNote = fopen(fullPath, "w");
   printf("Enter content:\n");
-  char content[2048];
-  fgets(content, 2048, stdin);
+  char content[4096];
+  fgets(content, 4096, stdin);
   /* scanf("%*c"); */
   fputs(content, newNote);
+  printf("Note \"%s\" sucsessfully created\n", noteName);
+  scanf("%*c");
+  printf("\033[2J");
   fclose(newNote);
+  return;
+}
+
+void openNote(char* noteName, const char* notesPath)
+{
+  char fullPath[128];
+  strcpy(fullPath, notesPath);
+  strcat(fullPath, noteName);
+  char* md = ".md";
+  strcat(fullPath, md);
+  char content[4096];
+
+  FILE* readNote = fopen(fullPath, "r");
+  if (readNote != NULL)
+  {
+    printf("Content of note \"%s\": \n", noteName);
+    fread(content, 1, 4096, readNote);
+    printf("%s", content);
+    scanf("%*c");
+    printf("\033[2J");
+    return;
+  }
+  printf("Note \"%s\" does not exist!\n", noteName);
+  scanf("%*c");
+  printf("\033[2J");
+  return;
+
 }
 
 void deleteNote(char* noteName, const char* notesPath)
@@ -88,55 +111,101 @@ void deleteNote(char* noteName, const char* notesPath)
   {
     remove(fullPath);
     printf("Note \"%s\" sucsessfully deleted\n", noteName);
+    scanf("%*c");
+    printf("\033[2J");
     return;
   }
   printf("Note \"%s\" does not exist!\n", noteName);
+  scanf("%*c");
+  printf("\033[2J");
   return;
+}
 
+void editNote(char* noteName, const char* notesPath)
+{
+  char fullPath[128];
+  strcpy(fullPath, notesPath);
+  strcat(fullPath, noteName);
+  char* md = ".md";
+  strcat(fullPath, md);
+  char content[4096];
+
+  FILE* checkNote = fopen(fullPath, "r");
+  if (checkNote != NULL)
+  {
+    FILE* newNote = fopen(fullPath, "w");
+    printf("Enter new content for note \"%s\" (all previous content will be deleted): \n", noteName);
+    fgets(content, 4096, stdin);
+    fputs(content, newNote);
+    printf("Content in note \"%s\" sucsessfully edited\n", noteName);
+    scanf("%*c");
+    printf("\033[2J");
+    fclose(newNote);
+    fclose(checkNote);
+    return;
+  }
+  printf("Note \"%s\" does not exist!\n", noteName);
+  scanf("%*c");
+  printf("\033[2J");
+  return;
 }
 
 int main(void)
 {
+  char isExit = 1;
   const char* notesPath = "./notes/";
 
-  printGreet();
-  printOptions(); 
-  mkdirNotes(notesPath);
-  refreshNotes(notesPath);
-  /* printNotesList(configPath); */
+  printf("\033[2J");
+  while (isExit != 0)
+  {
+    printGreet();
 
+    mkdirNotes(notesPath);
+    showNotes(notesPath);
+    printOptions(); 
   
-  char action[2];
-  if (fgets(action, 2, stdin) == NULL)
-  {
-    printf("Error while reading\n");
-  }
-  *action -= 48;
-  scanf("%*c"); // cleans '\n' from buffer after fgets()
+    char action[2];
+    if (fgets(action, 2, stdin) == NULL)
+    {
+      printf("Error while reading\n");
+    }
+    scanf("%*c"); // cleans '\n' from buffer after fgets()
   
-  char noteName[64];
-  switch (*action)
-  {
-    case 1:
+    char noteName[64];
+    if (action[0] == 'c')
+    {
       printf("Enter name of new note:\n");
       fgets(noteName, 64, stdin);
-      /* while ((c = getchar()) != '\n' && c != EOF) { } */
-      /* printf(noteName); */
       noteName[strcspn(noteName, "\n")] = '\0'; //replacing '\n' with '\0' in noteName
-      if (checkExistingNote(noteName, notesPath))
-      {
-        createNote(noteName, notesPath);
-      }
-      break;
-    case 3:
+      createNote(noteName, notesPath);
+    }
+    else if (action[0] == 'o')
+    {
+      printf("Enter name of note that you want to open:\n");
+      fgets(noteName, 64, stdin);
+      noteName[strcspn(noteName, "\n")] = '\0'; //replacing '\n' with '\0' in noteName
+      openNote(noteName, notesPath);
+    }
+    else if (action[0] == 'e')    
+    {
+      printf("Enter name of note that you want to edit:\n");
+      fgets(noteName, 64, stdin);
+      noteName[strcspn(noteName, "\n")] = '\0'; //replacing '\n' with '\0' in noteName
+      editNote(noteName, notesPath);
+    }
+    else if (action[0] == 'd')
+    {
       printf("Enter name of note that you want to delete:\n");
       fgets(noteName, 64, stdin);
       noteName[strcspn(noteName, "\n")] = '\0'; //replacing '\n' with '\0' in noteName
       deleteNote(noteName, notesPath);      
+    }
+    else if (action[0] == 'q')
+    {
+      isExit = 0;
       break;
+    }
   }
-  //printf("\033[2J");
-  //printf("%d\n", *action);
 
   return 0;
 }
