@@ -138,7 +138,7 @@ void editNote(char* noteName, const char* notesPath)
     printf("Enter new content for note \"%s\" (all previous content will be deleted): \n", noteName);
     fgets(content, 4096, stdin);
     fputs(content, newNote);
-    printf("Content in note \"%s\" sucsessfully edited\n", noteName);
+    printf("Content in note \"%s\" sucsessfully edited\nPress Enter...\n", noteName);
     scanf("%*c");
     printf("\033[2J\033[H");
     fclose(newNote);
