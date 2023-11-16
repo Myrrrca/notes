@@ -1,0 +1,5 @@
+open terminal in directory with notes.out and type
+sudo mv notes.out /usr/local/bin && cd /usr/local/bin && sudo ln -s notes.out notes && cd -
+
+for running type "notes" in your terminal
+
