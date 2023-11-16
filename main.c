@@ -52,9 +52,9 @@ void createNote(char* noteName, const char* notesPath)
   FILE* checkNote = fopen(fullPath, "r");
   if (checkNote != NULL)
   {
-    printf("Note \"%s\" already exist!\n", noteName);
+    printf("Note \"%s\" already exist!\nPress Enter...\n", noteName);
     scanf("%*c");
-    printf("\033[2J");
+    printf("\033[2J\033[H");
     fclose(checkNote);
     return;
   }
@@ -65,9 +65,9 @@ void createNote(char* noteName, const char* notesPath)
   fgets(content, 4096, stdin);
   /* scanf("%*c"); */
   fputs(content, newNote);
-  printf("Note \"%s\" sucsessfully created\n", noteName);
+  printf("Note \"%s\" sucsessfully created\nPress Enter...\n", noteName);
   scanf("%*c");
-  printf("\033[2J");
+  printf("\033[2J\033[H");
   fclose(newNote);
   return;
 }
@@ -87,13 +87,14 @@ void openNote(char* noteName, const char* notesPath)
     printf("Content of note \"%s\": \n", noteName);
     fread(content, 1, 4096, readNote);
     printf("%s", content);
+    printf("Press Enter...\n");
     scanf("%*c");
-    printf("\033[2J");
+    printf("\033[2J\033[H");
     return;
   }
-  printf("Note \"%s\" does not exist!\n", noteName);
+  printf("Note \"%s\" does not exist!\nPress Enter...\n", noteName);
   scanf("%*c");
-  printf("\033[2J");
+  printf("\033[2J\033[H");
   return;
 
 }
@@ -110,14 +111,14 @@ void deleteNote(char* noteName, const char* notesPath)
   if (checkNote != NULL)
   {
     remove(fullPath);
-    printf("Note \"%s\" sucsessfully deleted\n", noteName);
+    printf("Note \"%s\" sucsessfully deleted\nPress Enter...\n", noteName);
     scanf("%*c");
-    printf("\033[2J");
+    printf("\033[2J\033[H");
     return;
   }
-  printf("Note \"%s\" does not exist!\n", noteName);
+  printf("Note \"%s\" does not exist!\nPress Enter...\n", noteName);
   scanf("%*c");
-  printf("\033[2J");
+  printf("\033[2J\033[H");
   return;
 }
 
@@ -139,14 +140,14 @@ void editNote(char* noteName, const char* notesPath)
     fputs(content, newNote);
     printf("Content in note \"%s\" sucsessfully edited\n", noteName);
     scanf("%*c");
-    printf("\033[2J");
+    printf("\033[2J\033[H");
     fclose(newNote);
     fclose(checkNote);
     return;
   }
   printf("Note \"%s\" does not exist!\n", noteName);
   scanf("%*c");
-  printf("\033[2J");
+  printf("\033[2J\033[H");
   return;
 }
 
@@ -155,11 +156,10 @@ int main(void)
   char isExit = 1;
   const char* notesPath = "./notes/";
 
-  printf("\033[2J");
+  printf("\033[2J\033[H");
   while (isExit != 0)
   {
     printGreet();
-
     mkdirNotes(notesPath);
     showNotes(notesPath);
     printOptions(); 
@@ -167,7 +167,7 @@ int main(void)
     char action[2];
     if (fgets(action, 2, stdin) == NULL)
     {
-      printf("Error while reading\n");
+      printf("Error while reading\nPress Enter...\n");
     }
     scanf("%*c"); // cleans '\n' from buffer after fgets()
   
@@ -202,6 +202,7 @@ int main(void)
     }
     else if (action[0] == 'q')
     {
+      printf("\033[2J\033[H");
       isExit = 0;
       break;
     }
