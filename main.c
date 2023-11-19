@@ -3,6 +3,25 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <stdlib.h>
+#include "toml.h"
+
+void doConfig(const char* configPath)
+{
+  FILE* readConfig = fopen(configPath, "r");
+  if (readConfig != NULL)
+  {
+    fclose(readConfig);
+    return;
+  }
+
+  FILE* createConfig = fopen(configPath, "w");
+  printf("Config config.toml sucsessfully created\nPress Enter...\n");
+  scanf("%*c");
+  fclose(createConfig);
+  return;
+
+}
 
 void printGreet()
 {
@@ -145,7 +164,7 @@ void editNote(char* noteName, const char* notesPath)
     fclose(checkNote);
     return;
   }
-  printf("Note \"%s\" does not exist!\n", noteName);
+  printf("Note \"%s\" does not exist!\nPress Enter...\n", noteName);
   scanf("%*c");
   printf("\033[2J\033[H");
   return;
@@ -153,10 +172,19 @@ void editNote(char* noteName, const char* notesPath)
 
 int main(void)
 {
-  char isExit = 1;
-  const char* notesPath = "./notes/";
-
   printf("\033[2J\033[H");
+
+  char isExit = 1;
+  const char* notesPath = "/notes/";
+  const char* HOME = getenv("HOME");
+  char configPath[256];
+  strcpy(configPath, HOME);
+  strcat(configPath, "/.config/notes-supa-config/config.toml");
+   
+  doConfig(configPath);
+
+
+  /* printf("\033[2J\033[H"); */
   while (isExit != 0)
   {
     printGreet();
@@ -168,8 +196,9 @@ int main(void)
     if (fgets(action, 2, stdin) == NULL)
     {
       printf("Error while reading\nPress Enter...\n");
+      break;
     }
-    scanf("%*c"); // cleans '\n' from buffer after fgets()
+    /* scanf("%*c"); // cleans '\n' from buffer after fgets() */
   
     char noteName[64];
     if (action[0] == 'c')
