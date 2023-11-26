@@ -7,51 +7,42 @@
 #include <errno.h>
 #include "./lib/tomlc99/toml.h"
 
-void createConfig(const char* configPath, const char* HOME)
+void createNotesAndConfig(const char* configPath, const char* HOME, const char* notesPathBuff)
 {
   char customPath[1024];
   printf("Enter path for your notes directory:\n");
   printf("(you can leave input empty and press \"Enter\" for creating \"note\" directory at %s.local/share/mynotes/)\n", HOME);
   printf("%s", HOME);
   fgets(customPath, sizeof(customPath), stdin);
-  char notesPath[1024];
+  static char notesPath[1024];
   strcpy(notesPath, HOME);
 
   if (customPath[0] == '\n')
   {
     strcat(notesPath, ".local/share/mynotes/");
-    puts(notesPath);
     mkdir(notesPath, 0777);
   }
   else 
   {
     strcat(notesPath, customPath);
+    notesPath[strcspn(notesPath, "\n")] = '\0'; //replacing '\n' with '\0' in notesPath
+    strcat(notesPath, "/");
     if (mkdir(notesPath, 0777) == -1)
     {
-      if (errno == EEXIST)
-      {
-      }
-      else 
+      if (errno != EEXIST)
       {
         perror("Error while creating directory");
         exit(1);
       }
     }
-    else 
-    {
-      printf("Directory created\n");
-    }
   }
 
   FILE* createConfig = fopen(configPath, "w");
-  char configText1[] = "# provides config location\nlocation = ";
-  char* configText = malloc(sizeof(configText1) + sizeof(notesPath) + 1);
-  strcpy(configText, configText1);
-  strcat(configText, notesPath);
-  puts(configText);
+  char configText[] = "# provides config location\nlocation = ";
   fwrite(configText, sizeof(configText[0]), strlen(configText) - 1, createConfig);
-  free(configText);
+  fwrite(notesPath, sizeof(notesPath[0]), strlen(notesPath) - 1, createConfig);
   fclose(createConfig);
+  strcpy(notesPathBuff, notesPath);
   return;
 
 }
@@ -208,8 +199,7 @@ int main(void)
   printf("\033[2J\033[H");
 
   char isExit = 1;
-  const char* notesPath = "/notes/";
-  const char* HOME = getenv("HOME");
+  char* HOME = getenv("HOME");
   strcat(HOME, "/");
   char configPath[256];
   strcpy(configPath, HOME);
@@ -222,14 +212,14 @@ int main(void)
   strcat(configPath, configName);
   printf("%s\n", configPath);
    
-  createConfig(configPath, HOME);
-
+  char notesPath[1024];
+  createNotesAndConfig(configPath, HOME, notesPath);
+  printf("aboba %s aboba %d", notesPath, sizeof(notesPath));
 
   /* printf("\033[2J\033[H"); */
   /* while (isExit != 0) */
   /* { */
   /*   printGreet(); */
-  /*   mkdirNotes(notesPath); */
   /*   showNotes(notesPath); */
   /*   printOptions();  */
   /**/
