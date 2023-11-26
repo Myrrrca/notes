@@ -7,7 +7,55 @@
 #include <errno.h>
 #include "./lib/tomlc99/toml.h"
 
-void createNotesAndConfig(const char* configPath, const char* HOME, const char* notesPathBuff)
+/* int checkConfig(const char* configPath) */
+/* { */
+/*   FILE* config = fopen(configPath, "r"); */
+/*   char errbuf[256]; */
+/**/
+/*   if (!config) */
+/*   { */
+/*     return 1; */
+/*   } */
+/**/
+/*   toml_table_t* configT = toml_parse_file(config, errbuf, sizeof(errbuf)); */
+/*   fclose (config); */
+/**/
+/*   if (!configT) */
+/*   { */
+/*     return 1; */
+/*   } */
+/**/
+/*   toml_table_t* location = toml_table_in(configT, "location"); */
+/*   if (!location) */
+/*   { */
+/*     return 1; */
+/*   } */
+/**/
+/*   toml_datum_t path = toml_string_in(configT, "path"); */
+/*   if (!path.ok) */
+/*   { */
+/*     return 1; */
+/*   } */
+/*   return 0; */
+/* } */
+
+int checkConfig(const char* configPath)
+{
+  FILE* config = fopen(configPath, "r");
+  if (config != NULL)
+  {
+    printf("CONFIG EXISTS\n");
+    fseek(config, 39, SEEK_SET); 
+    char location[1024];
+    fread(location, 1, 1024, config);
+    printf("LOCATION: %s\n", location);
+    return 0;
+  }
+  puts("ERROR"); 
+  return 1;
+}
+
+void createNotesAndConfig(const char* configPath, const char* HOME, char* notesPathBuff)
 {
   char customPath[1024];
   printf("Enter path for your notes directory:\n");
@@ -38,9 +86,12 @@ void createNotesAndConfig(const char* configPath, const char* HOME, const char* 
   }
 
   FILE* createConfig = fopen(configPath, "w");
-  char configText[] = "# provides config location\nlocation = ";
+  /* char configText[] = "# provides config location\nlocation = "; */
+  char configText[] = "# provides config location\nlocation = "; // size = 39!!!!!!!
+  /* uint16_t size = sizeof(configText); */
+  /* printf("%d", size); */
   fwrite(configText, sizeof(configText[0]), strlen(configText) - 1, createConfig);
-  fwrite(notesPath, sizeof(notesPath[0]), strlen(notesPath) - 1, createConfig);
+  fwrite(notesPath, sizeof(notesPath[0]), strlen(notesPath), createConfig);
   fclose(createConfig);
   strcpy(notesPathBuff, notesPath);
   return;
@@ -197,8 +248,8 @@ void editNote(char* noteName, const char* notesPath)
 int main(void)
 {
   printf("\033[2J\033[H");
-
   char isExit = 1;
+
   char* HOME = getenv("HOME");
   strcat(HOME, "/");
   char configPath[256];
@@ -211,10 +262,13 @@ int main(void)
   char* configName = "config.toml";
   strcat(configPath, configName);
   printf("%s\n", configPath);
+  if (checkConfig(configPath))
+  {
+    char notesPath[1024];
+    createNotesAndConfig(configPath, HOME, notesPath);
+  }
    
-  char notesPath[1024];
-  createNotesAndConfig(configPath, HOME, notesPath);
-  printf("aboba %s aboba %d", notesPath, sizeof(notesPath));
+
 
   /* printf("\033[2J\033[H"); */
   /* while (isExit != 0) */
