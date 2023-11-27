@@ -49,8 +49,9 @@ int checkNotes(const char* configPath, char* _location)
     fread(location, 1, 1024, config);
     char* slash = strrchr(location, '/');
     *++slash = '\0';
-    _location = location; 
-    printf("LOCATION OF YOUR NOTES DIRECTORY: %s\n", location);
+    strcpy(_location, location);
+    /* _location = location;  */
+    
     return 0;
   }
   return 1;
@@ -85,7 +86,6 @@ void createNotesAndConfig(const char* configPath, const char* HOME, char* notesP
       }
     }
   }
-
   FILE* createConfig = fopen(configPath, "w");
   /* char configText[] = "# provides config location\nlocation = "; */
   char configText[] = "# provides config location\nlocation = "; // size = 39!!!!!!!
@@ -95,6 +95,7 @@ void createNotesAndConfig(const char* configPath, const char* HOME, char* notesP
   fwrite(notesPath, sizeof(notesPath[0]), strlen(notesPath), createConfig);
   fclose(createConfig);
   strcpy(notesPathBuff, notesPath);
+  printf("\033[2J\033[H");
   return;
 
 }
@@ -106,7 +107,7 @@ void printGreet()
 
 void printOptions()
 {
-  printf("c - create note   o - open   e - edit note   d - delete note   n - change notes directory   q - exit\n"); }
+  printf("c - create   o - open   e - edit   d - delete   n - change notes directory   v - view location  q - exit\n"); }
 
 void mkdirNotes(const char* notesPath)
 {
@@ -263,69 +264,86 @@ int main(void)
   char* configName = "config.toml";
   strcat(configPath, configName);
   /* printf("%s\n", configPath); */
-  char location[1024];
-  if (checkNotes(configPath, location))
+  char notesPath[1024];
+  if (checkNotes(configPath, notesPath))
   {
-    char notesPath[1024];
     createNotesAndConfig(configPath, HOME, notesPath);
   }
-  else 
+
+  while (isExit)
   {
+    printGreet();
+    /* printf("%s ...", notesPath); */
+    showNotes(notesPath);
+    printOptions(); 
 
+    char action[2];
+    if (fgets(action, 2, stdin) == NULL)
+    {
+      printf("Error while reading\nPress Enter...\n");
+      break;
+    }
+
+    char noteName[64];
+    if (action[0] == 'c')
+    {
+      printf("Enter name of new note:\n");
+      int c;
+      while ((c = getchar()) != '\n' && c != EOF) { }
+      fgets(noteName, 64, stdin);
+      noteName[strcspn(noteName, "\n")] = '\0'; //replacing '\n' with '\0' in noteName
+      createNote(noteName, notesPath);
+    }
+    else if (action[0] == 'o')
+    {
+      printf("Enter name of note that you want to open:\n");
+      int c;
+      while ((c = getchar()) != '\n' && c != EOF) { }
+      fgets(noteName, 64, stdin);
+      noteName[strcspn(noteName, "\n")] = '\0'; //replacing '\n' with '\0' in noteName
+      openNote(noteName, notesPath);
+    }
+    else if (action[0] == 'e')    
+    {
+      printf("Enter name of note that you want to edit:\n");
+      int c;
+      while ((c = getchar()) != '\n' && c != EOF) { }
+      fgets(noteName, 64, stdin);
+      noteName[strcspn(noteName, "\n")] = '\0'; //replacing '\n' with '\0' in noteName
+      editNote(noteName, notesPath);
+    }
+    else if (action[0] == 'd')
+    {
+      printf("Enter name of note that you want to delete:\n");
+      int c;
+      while ((c = getchar()) != '\n' && c != EOF) { }
+      fgets(noteName, 64, stdin);
+      noteName[strcspn(noteName, "\n")] = '\0'; //replacing '\n' with '\0' in noteName
+      deleteNote(noteName, notesPath);      
+    }
+    else if (action[0] == 'n')
+    {
+      int c;
+      while ((c = getchar()) != '\n' && c != EOF) { }
+      createNotesAndConfig(configPath, HOME, notesPath);
+      printf("Path for your notes sucsessfully changed to \"%s\"\nPress Enter...\n", notesPath);
+      scanf("%*c");
+      printf("\033[2J\033[H");
+    }
+    else if (action[0] == 'v')
+    {
+      printf("\033[2J\033[H");
+      printf("LOCATION OF YOUR NOTES DIRECTORY: %s\n", notesPath);  
+      scanf("%*c");
+      printf("\033[2J\033[H");
+    }
+    else if (action[0] == 'q')
+    {
+      printf("\033[2J\033[H");
+      isExit = 0;
+      break;
+    }
   }
-   
-
-
-  /* printf("\033[2J\033[H"); */
-  /* while (isExit != 0) */
-  /* { */
-  /*   printGreet(); */
-  /*   showNotes(notesPath); */
-  /*   printOptions();  */
-  /**/
-  /*   char action[2]; */
-  /*   if (fgets(action, 2, stdin) == NULL) */
-  /*   { */
-  /*     printf("Error while reading\nPress Enter...\n"); */
-  /*     break; */
-  /*   } */
-  /**/
-  /*   char noteName[64]; */
-  /*   if (action[0] == 'c') */
-  /*   { */
-  /*     printf("Enter name of new note:\n"); */
-  /*     fgets(noteName, 64, stdin); */
-  /*     noteName[strcspn(noteName, "\n")] = '\0'; //replacing '\n' with '\0' in noteName */
-  /*     createNote(noteName, notesPath); */
-  /*   } */
-  /*   else if (action[0] == 'o') */
-  /*   { */
-  /*     printf("Enter name of note that you want to open:\n"); */
-  /*     fgets(noteName, 64, stdin); */
-  /*     noteName[strcspn(noteName, "\n")] = '\0'; //replacing '\n' with '\0' in noteName */
-  /*     openNote(noteName, notesPath); */
-  /*   } */
-  /*   else if (action[0] == 'e')     */
-  /*   { */
-  /*     printf("Enter name of note that you want to edit:\n"); */
-  /*     fgets(noteName, 64, stdin); */
-  /*     noteName[strcspn(noteName, "\n")] = '\0'; //replacing '\n' with '\0' in noteName */
-  /*     editNote(noteName, notesPath); */
-  /*   } */
-  /*   else if (action[0] == 'd') */
-  /*   { */
-  /*     printf("Enter name of note that you want to delete:\n"); */
-  /*     fgets(noteName, 64, stdin); */
-  /*     noteName[strcspn(noteName, "\n")] = '\0'; //replacing '\n' with '\0' in noteName */
-  /*     deleteNote(noteName, notesPath);       */
-  /*   } */
-  /*   else if (action[0] == 'q') */
-  /*   { */
-  /*     printf("\033[2J\033[H"); */
-  /*     isExit = 0; */
-  /*     break; */
-  /*   } */
-  /* } */
 
   return 0;
 }
