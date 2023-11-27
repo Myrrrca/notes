@@ -1,0 +1,27 @@
+#! /usr/bin/env bash
+
+[ ! -f ./notes.out ] && echo "cound not find notes.out file, run from project directory; exiting" && exit
+
+bin_dir=${XDG_BIN_HOME:-$HOME/.local/bin}
+
+echo "installation directory: ${bin_dir}"
+mkdir -p $bin_dir
+
+case $(basename -- $(echo $SHELL)) in
+  zsh)
+    echo "zsh shell detected"
+    echo "export PATH=$PATH:$bin_dir" >> ~/.zshrc
+    ;;
+
+  bash)
+    echo "bash shell detected"
+    echo "export PATH=$PATH:$bin_dir" >> ~/.bashrc
+    ;;
+
+  *)
+    echo "unsupported shell, exiting";  exit
+    ;;
+esac
+
+install -m 700 ./notes.out $bin_dir/notes
+echo "installed, run: notes"
