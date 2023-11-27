@@ -4,40 +4,150 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <stdlib.h>
+/* #include <fcntl.h> */
+#include <unistd.h>
 #include <errno.h>
 #include "./lib/tomlc99/toml.h"
 
-/* int checkConfig(const char* configPath) */
+/*  int cp(const char *to, const char *from) */
 /* { */
-/*   FILE* config = fopen(configPath, "r"); */
-/*   char errbuf[256]; */
+/*     int fd_to, fd_from; */
+/*     char buf[4096]; */
+/*     ssize_t nread; */
+/*     int saved_errno; */
 /**/
-/*   if (!config) */
-/*   { */
-/*     return 1; */
-/*   } */
+/*     fd_from = open(from, O_RDONLY); */
+/*     if (fd_from < 0) */
+/*         return -1; */
 /**/
-/*   toml_table_t* configT = toml_parse_file(config, errbuf, sizeof(errbuf)); */
-/*   fclose (config); */
+/*     fd_to = open(to, O_WRONLY | O_CREAT | O_EXCL, 0666); */
+/*     if (fd_to < 0) */
+/*         goto out_error; */
 /**/
-/*   if (!configT) */
-/*   { */
-/*     return 1; */
-/*   } */
+/*     while (nread = read(fd_from, buf, sizeof buf), nread > 0) */
+/*     { */
+/*         char *out_ptr = buf; */
+/*         ssize_t nwritten; */
 /**/
-/*   toml_table_t* location = toml_table_in(configT, "location"); */
-/*   if (!location) */
-/*   { */
-/*     return 1; */
-/*   } */
+/*         do { */
+/*             nwritten = write(fd_to, out_ptr, nread); */
 /**/
-/*   toml_datum_t path = toml_string_in(configT, "path"); */
-/*   if (!path.ok) */
-/*   { */
-/*     return 1; */
-/*   } */
-/*   return 0; */
+/*             if (nwritten >= 0) */
+/*             { */
+/*                 nread -= nwritten; */
+/*                 out_ptr += nwritten; */
+/*             } */
+/*             else if (errno != EINTR) */
+/*             { */
+/*                 goto out_error; */
+/*             } */
+/*         } while (nread > 0); */
+/*     } */
+/**/
+/*     if (nread == 0) */
+/*     { */
+/*         if (close(fd_to) < 0) */
+/*         { */
+/*             fd_to = -1; */
+/*             goto out_error; */
+/*         } */
+/*         close(fd_from); */
+/*         // Success! */
+/*         return 0; */
+/*     } */
+/**/
+/*   out_error: */
+/*     saved_errno = errno; */
+/**/
+/*     close(fd_from); */
+/*     if (fd_to >= 0) */
+/*         close(fd_to); */
+/**/
+/*     errno = saved_errno; */
+/*     return -1; */
 /* } */
+
+void copyNotes(const char *sourceDir, const char *destinationDir) 
+{
+  DIR *source = opendir(sourceDir);
+  DIR *destination = opendir(destinationDir);
+
+  if (!source || !destination) 
+  {
+    perror("Error opening directories");
+    exit(EXIT_FAILURE);
+  }
+
+  struct dirent *entry;
+
+  while ((entry = readdir(source)) != NULL)
+  {
+    if (entry->d_type == DT_REG) 
+    {
+      char sourcePath[PATH_MAX];
+      char destinationPath[PATH_MAX];
+      snprintf(sourcePath, sizeof(sourcePath), "%s/%s", sourceDir, entry->d_name);
+      snprintf(destinationPath, sizeof(destinationPath), "%s/%s", destinationDir, entry->d_name);
+
+      FILE *sourceFile = fopen(sourcePath, "rb");
+      FILE *destinationFile = fopen(destinationPath, "wb");
+
+      if (!sourceFile || !destinationFile) 
+      {
+        perror("Error opening files");
+        exit(EXIT_FAILURE);
+      }
+
+      char buffer[4096];
+      size_t bytesRead;
+
+      while ((bytesRead = fread(buffer, 1, sizeof(buffer), sourceFile)) > 0) 
+      {
+        fwrite(buffer, 1, bytesRead, destinationFile);
+      }
+
+      fclose(sourceFile);
+      fclose(destinationFile);
+    }
+  }
+    closedir(source);
+    closedir(destination);
+}
+
+void rmAllNotesInDir(const char* dirPath)
+{
+  DIR *dir = opendir(dirPath);
+
+  if (dir == NULL) 
+  {
+    exit(EXIT_FAILURE);
+  }
+
+  struct dirent *entry;
+
+  while ((entry = readdir(dir)) != NULL) 
+  {
+    if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) 
+    {
+      char notePath[256];
+      snprintf(notePath, sizeof(notePath), "%s/%s", dirPath, entry->d_name);
+
+      if (remove(notePath) != 0) 
+      {
+        exit(EXIT_FAILURE);
+      }
+
+    }
+  }
+
+  closedir(dir);
+
+}
+
+void rmDir(const char* dirPath)
+{
+  rmdir(dirPath);
+}
 
 int checkNotes(const char* configPath, char* _location)
 {
@@ -50,22 +160,25 @@ int checkNotes(const char* configPath, char* _location)
     char* slash = strrchr(location, '/');
     *++slash = '\0';
     strcpy(_location, location);
-    /* _location = location;  */
-    
     return 0;
   }
   return 1;
 }
 
-void createNotesAndConfig(const char* configPath, const char* HOME, char* notesPathBuff)
+int createNotesAndConfig(const char* configPath, const char* HOME, char* notesPathBuff)
 {
   char customPath[1024];
   printf("Enter path for your notes directory:\n");
   printf("(you can leave input empty and press \"Enter\" for creating \"note\" directory at %s.local/share/mynotes/)\n", HOME);
   printf("%s", HOME);
   fgets(customPath, sizeof(customPath), stdin);
-  static char notesPath[1024];
+  char notesPath[1024];
   strcpy(notesPath, HOME);
+
+
+
+  printf("... %s ... %s ...", notesPathBuff, notesPath);
+    scanf("%*c");
 
   if (customPath[0] == '\n')
   {
@@ -77,6 +190,14 @@ void createNotesAndConfig(const char* configPath, const char* HOME, char* notesP
     strcat(notesPath, customPath);
     notesPath[strcspn(notesPath, "\n")] = '\0'; //replacing '\n' with '\0' in notesPath
     strcat(notesPath, "/");
+
+    if (strcmp(notesPathBuff, notesPath)== 0)
+    {
+      printf("Your notes directory already created here!\nPress Enter...\n");
+      scanf("%*c");
+      return 0;
+    }
+
     if (mkdir(notesPath, 0777) == -1)
     {
       if (errno != EEXIST)
@@ -86,9 +207,54 @@ void createNotesAndConfig(const char* configPath, const char* HOME, char* notesP
       }
     }
   }
+
+  FILE* checkConfig = fopen(configPath, "r");
+  if (checkConfig != NULL && strcmp(notesPathBuff, notesPath))
+  {
+
+    printf("y - copy notes from previous directory\nyd - copy notes and delete previous directory\nc - cut notes from previous directory\nENTER - leave notes directory with all the notes as it was\n");
+    char action[3];
+    if (fgets(action, 3, stdin) == NULL)
+    {
+      printf("Error while reading\nPress Enter...\n");
+    }
+
+    if (action[0] == 'y' && action[1] == '\n')
+    {
+      /* int c; */
+      /* while ((c = getchar()) != '\n' && c != EOF) { } */
+      copyNotes(notesPathBuff, notesPath);
+      printf("copied");
+      scanf("%*c");
+    }
+    else if (action[0] == 'y' && action[1] == 'd')
+    {
+      /* int c; */
+      /* while ((c = getchar()) != '\n' && c != EOF) { } */
+      copyNotes(notesPathBuff, notesPath);
+      rmAllNotesInDir(notesPathBuff);
+      rmDir(notesPathBuff);
+      printf("copied and deleted");
+      scanf("%*c");
+    }
+    else if (action[0] == 'c' && action[1] == '\n')
+    {
+      /* int c; */
+      /* while ((c = getchar()) != '\n' && c != EOF) { } */
+      copyNotes(notesPathBuff, notesPath);
+      rmAllNotesInDir(notesPathBuff);
+      printf("cutted");
+      scanf("%*c");
+    }
+    /* else if (action[0] == '\n') */
+    /* { */
+    /**/
+    /* } */
+  }
+
   FILE* createConfig = fopen(configPath, "w");
   /* char configText[] = "# provides config location\nlocation = "; */
-  char configText[] = "# provides config location\nlocation = "; // size = 39!!!!!!!
+  char configText[] = "# provides config location\nlocation = "; // size = 39!!!!! (works only 37)
   /* uint16_t size = sizeof(configText); */
   /* printf("%d", size); */
   fwrite(configText, sizeof(configText[0]), strlen(configText) - 1, createConfig);
@@ -97,7 +263,6 @@ void createNotesAndConfig(const char* configPath, const char* HOME, char* notesP
   strcpy(notesPathBuff, notesPath);
   printf("\033[2J\033[H");
   return;
-
 }
 
 void printGreet()
@@ -325,9 +490,11 @@ int main(void)
     {
       int c;
       while ((c = getchar()) != '\n' && c != EOF) { }
-      createNotesAndConfig(configPath, HOME, notesPath);
-      printf("Path for your notes sucsessfully changed to \"%s\"\nPress Enter...\n", notesPath);
-      scanf("%*c");
+      if (createNotesAndConfig(configPath, HOME, notesPath))
+      {
+        printf("Path for your notes sucsessfully changed to \"%s\"\nPress Enter...\n", notesPath);
+        scanf("%*c");
+      }
       printf("\033[2J\033[H");
     }
     else if (action[0] == 'v')
