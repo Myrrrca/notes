@@ -1,5 +1,5 @@
-#Simple notes application for Linux users
-##Manage your notes in a simple way
+# Simple notes application for Linux users
+## Manage your notes in a simple way
 
 BEFORE INSTALLATION MAKE SURE THAT ~/.local/bin EXIST ON YOUR MACHINE. if it not exist create it using command below and make sure its added to your &PATH
 mkdir -p ~/.local/bin 
