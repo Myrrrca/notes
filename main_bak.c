@@ -107,7 +107,7 @@ void printGreet()
 
 void printOptions()
 {
-  printf("c - create   o - open   e - edit   d - delete   n - change notes directory   v - view location   q - exit\n"); }
+  printf("c - create   o - open   e - edit   d - delete   n - change notes directory   v - view location  q - exit\n"); }
 
 void mkdirNotes(const char* notesPath)
 {
@@ -333,9 +333,7 @@ int main(void)
     else if (action[0] == 'v')
     {
       printf("\033[2J\033[H");
-      int c;
-      while ((c = getchar()) != '\n' && c != EOF) { }   
-      printf("LOCATION OF YOUR NOTES DIRECTORY: %s\nPress Enter...\n", notesPath);  
+      printf("LOCATION OF YOUR NOTES DIRECTORY: %s\n", notesPath);  
       scanf("%*c");
       printf("\033[2J\033[H");
     }
@@ -345,11 +343,7 @@ int main(void)
       isExit = 0;
       break;
     }
-    else 
-    {
-      printf("\033[2J\033[H");  
-    }
   }
 
   return 0;
-}
+}     
