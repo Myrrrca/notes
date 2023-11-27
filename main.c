@@ -39,19 +39,20 @@
 /*   return 0; */
 /* } */
 
-int checkConfig(const char* configPath)
+int checkNotes(const char* configPath, char* _location)
 {
   FILE* config = fopen(configPath, "r");
   if (config != NULL)
   {
-    printf("CONFIG EXISTS\n");
-    fseek(config, 39, SEEK_SET); 
+    fseek(config, 37, SEEK_SET); 
     char location[1024];
     fread(location, 1, 1024, config);
-    printf("LOCATION: %s\n", location);
+    char* slash = strrchr(location, '/');
+    *++slash = '\0';
+    _location = location; 
+    printf("LOCATION OF YOUR NOTES DIRECTORY: %s\n", location);
     return 0;
   }
-  puts("ERROR"); 
   return 1;
 }
 
@@ -105,7 +106,7 @@ void printGreet()
 
 void printOptions()
 {
-  printf("c - create note   o - open   e - edit note   d - delete note   q - exit\n"); }
+  printf("c - create note   o - open   e - edit note   d - delete note   n - change notes directory   q - exit\n"); }
 
 void mkdirNotes(const char* notesPath)
 {
@@ -261,11 +262,16 @@ int main(void)
   }
   char* configName = "config.toml";
   strcat(configPath, configName);
-  printf("%s\n", configPath);
-  if (checkConfig(configPath))
+  /* printf("%s\n", configPath); */
+  char location[1024];
+  if (checkNotes(configPath, location))
   {
     char notesPath[1024];
     createNotesAndConfig(configPath, HOME, notesPath);
+  }
+  else 
+  {
+
   }
    
 
