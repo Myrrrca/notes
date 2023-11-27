@@ -175,11 +175,6 @@ int createNotesAndConfig(const char* configPath, const char* HOME, char* notesPa
   char notesPath[1024];
   strcpy(notesPath, HOME);
 
-
-
-  printf("... %s ... %s ...", notesPathBuff, notesPath);
-    scanf("%*c");
-
   if (customPath[0] == '\n')
   {
     strcat(notesPath, ".local/share/mynotes/");
@@ -221,16 +216,12 @@ int createNotesAndConfig(const char* configPath, const char* HOME, char* notesPa
 
     if (action[0] == 'y' && action[1] == '\n')
     {
-      /* int c; */
-      /* while ((c = getchar()) != '\n' && c != EOF) { } */
       copyNotes(notesPathBuff, notesPath);
       printf("copied");
       scanf("%*c");
     }
     else if (action[0] == 'y' && action[1] == 'd')
     {
-      /* int c; */
-      /* while ((c = getchar()) != '\n' && c != EOF) { } */
       copyNotes(notesPathBuff, notesPath);
       rmAllNotesInDir(notesPathBuff);
       rmDir(notesPathBuff);
@@ -239,17 +230,11 @@ int createNotesAndConfig(const char* configPath, const char* HOME, char* notesPa
     }
     else if (action[0] == 'c' && action[1] == '\n')
     {
-      /* int c; */
-      /* while ((c = getchar()) != '\n' && c != EOF) { } */
       copyNotes(notesPathBuff, notesPath);
       rmAllNotesInDir(notesPathBuff);
       printf("cutted");
       scanf("%*c");
     }
-    /* else if (action[0] == '\n') */
-    /* { */
-    /**/
-    /* } */
   }
 
   FILE* createConfig = fopen(configPath, "w");
@@ -272,7 +257,7 @@ void printGreet()
 
 void printOptions()
 {
-  printf("c - create   o - open   e - edit   d - delete   n - change notes directory   v - view location   q - exit\n"); }
+  printf("c - create   o - open   e - edit   d - delete   r - refresh   n - change notes directory   v - view location   q - exit\n"); }
 
 void mkdirNotes(const char* notesPath)
 {
@@ -324,7 +309,6 @@ void createNote(char* noteName, const char* notesPath)
   printf("Enter content:\n");
   char content[4096];
   fgets(content, 4096, stdin);
-  /* scanf("%*c"); */
   fputs(content, newNote);
   printf("Note \"%s\" sucsessfully created\nPress Enter...\n", noteName);
   scanf("%*c");
@@ -428,7 +412,6 @@ int main(void)
   }
   char* configName = "config.toml";
   strcat(configPath, configName);
-  /* printf("%s\n", configPath); */
   char notesPath[1024];
   if (checkNotes(configPath, notesPath))
   {
@@ -438,7 +421,6 @@ int main(void)
   while (isExit)
   {
     printGreet();
-    /* printf("%s ...", notesPath); */
     showNotes(notesPath);
     printOptions(); 
 
@@ -486,6 +468,14 @@ int main(void)
       noteName[strcspn(noteName, "\n")] = '\0'; //replacing '\n' with '\0' in noteName
       deleteNote(noteName, notesPath);      
     }
+    else if (action[0] == 'r')
+    {
+      printf("\033[2J\033[H");
+      printGreet();
+      showNotes(notesPath);
+      printOptions(); 
+    }
+
     else if (action[0] == 'n')
     {
       int c;
