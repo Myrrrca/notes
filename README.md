@@ -4,7 +4,9 @@
 Simple terminal application for managing your notes on Linux.
 
 ![Notes Overview 1](./img/overview1.png?raw=true)
+
 ![Notes Overview 2](./img/overview2.png?raw=true)
+
 ![Notes Overview 3](./img/overview3.png?raw=true)
 
 ### Installation
